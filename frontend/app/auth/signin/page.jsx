@@ -4,22 +4,39 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useUser } from '../../utils/userContext'
+import {
+  AmbientPage,
+  BrandMark,
+  MiniStat,
+  Panel,
+  bodyTextClass,
+  eyebrowClass,
+  fieldLabelClass,
+  headlineClass,
+  inputClass,
+  passwordToggleClass,
+  primaryButtonClass,
+  shellClass,
+  textLinkClass,
+} from '../../components/site-ui'
 
-const highlights = [
-  'Private one-on-one coding rooms',
-  'Session-based player identity',
-  'Battle-ready UI foundation',
+const entryStats = [
+  { label: 'Privacy', value: 'Invite only' },
+  { label: 'Ranking', value: 'Live board' },
+  { label: 'Entry', value: 'Fast access' },
 ]
 
 const Signin = () => {
   const router = useRouter()
   const { signIn, isAuthenticated, isLoading } = useUser()
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -29,6 +46,7 @@ const Signin = () => {
 
   const handleChange = (event) => {
     const { name, value } = event.target
+    setError('')
     setFormData((current) => ({ ...current, [name]: value }))
   }
 
@@ -41,99 +59,153 @@ const Signin = () => {
       await signIn(formData)
       router.push('/')
     } catch (submissionError) {
-      setError(submissionError.message)
+      setError(submissionError.message || 'Something went wrong. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  return (
-    <main className="grain grid min-h-screen px-6 py-6 sm:px-8 sm:py-8">
-      <section className="section-shell mx-auto grid w-full max-w-7xl flex-1 overflow-hidden rounded-[36px] border border-white/8 bg-white/[0.02] shadow-[0_30px_140px_rgba(0,0,0,0.35)] lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="flex flex-col justify-between border-b soft-divider p-8 sm:p-10 lg:border-b-0 lg:border-r">
-          <div className="fade-up">
-            <p className="eyebrow text-xs text-[#d8b48a]">Signin / Algora</p>
-            <h1 className="hero-title mt-8 max-w-2xl text-5xl font-semibold text-white sm:text-6xl">
-              Return to your private coding arena.
+  if (isLoading || isAuthenticated) {
+    return (
+      <AmbientPage>
+        <main className={`${shellClass} flex min-h-screen items-center justify-center py-10`}>
+          <Panel className="w-full max-w-3xl px-8 py-10 text-center sm:px-12 sm:py-12">
+            <p className={eyebrowClass}>Session</p>
+            <h1 className={`${headlineClass} mt-5 text-4xl leading-none sm:text-5xl`}>
+              Routing your session.
             </h1>
-            <p className="mt-7 max-w-xl text-base leading-8 muted-copy">
-              Continue where you left off and move back into battle setup, invites, and match flow.
-            </p>
-          </div>
+          </Panel>
+        </main>
+      </AmbientPage>
+    )
+  }
 
-          <div className="fade-up mt-10 space-y-4 [animation-delay:120ms]">
-            {highlights.map((item) => (
-              <div
-                key={item}
-                className="flex items-center gap-3 rounded-[20px] border border-white/8 bg-white/[0.03] px-4 py-4"
-              >
-                <span className="h-2.5 w-2.5 rounded-full bg-[#d8b48a]" />
-                <p className="text-sm text-white/85">{item}</p>
+  return (
+    <AmbientPage>
+      <main className={`${shellClass} min-h-screen py-6 sm:py-8`}>
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_480px] lg:items-center lg:gap-14">
+          <section className="flex min-h-full flex-col justify-between py-2 lg:py-4">
+            <BrandMark />
+
+            <div className="max-w-4xl py-14 lg:py-20">
+              <p className={eyebrowClass}>Sign in</p>
+              <h1 className={`${headlineClass} mt-6 max-w-4xl text-5xl leading-[0.9] sm:text-6xl lg:text-[5.6rem]`}>
+                Back to the room.
+              </h1>
+              <p className={`${bodyTextClass} mt-6 max-w-xl`}>
+                Use your account to continue into private matches.
+              </p>
+
+              <div className="mt-12 grid gap-4 sm:grid-cols-3">
+                {entryStats.map((item) => (
+                  <MiniStat key={item.label} label={item.label} value={item.value} />
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        <div className="flex items-center p-6 sm:p-8 lg:p-10">
-          <section className="panel-strong fade-up w-full rounded-[30px] p-8 sm:p-10">
-            <p className="eyebrow text-xs text-[#d8b48a]">Welcome back</p>
-            <h2 className="mt-5 text-3xl font-semibold text-white">Sign in</h2>
-            <p className="mt-3 text-sm leading-7 muted-copy">
-              Your session will be restored instantly once the backend accepts the login.
-            </p>
-
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-              <label className="block">
-                <span className="mb-2 block text-sm text-white/82">Email</span>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-3.5 text-white outline-none transition focus:border-[#d8b48a]/60 focus:bg-white/[0.06]"
-                  placeholder="you@algora.dev"
-                />
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-sm text-white/82">Password</span>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-3.5 text-white outline-none transition focus:border-[#d8b48a]/60 focus:bg-white/[0.06]"
-                  placeholder="Enter your password"
-                />
-              </label>
-
-              {error ? (
-                <p className="rounded-[20px] border border-[#ef8b83]/20 bg-[#ef8b83]/10 px-4 py-3 text-sm text-[#ffd1cb]">
-                  {error}
-                </p>
-              ) : null}
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="solid-button w-full rounded-[20px] px-5 py-3.5 font-semibold transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSubmitting ? 'Signing in...' : 'Sign in'}
-              </button>
-            </form>
-
-            <p className="mt-6 text-sm muted-copy">
-              New here?{' '}
-              <Link href="/auth/signup" className="font-semibold text-white transition hover:text-[#f3d6b4]">
-                Create an account
+            <p className="text-sm text-black/52">
+              New to Algora?{' '}
+              <Link href="/auth/signup" className={textLinkClass}>
+                Create account
               </Link>
             </p>
           </section>
+
+          <section className="flex items-center justify-center lg:justify-end">
+            <Panel className="w-full max-w-[480px] p-7 sm:p-8 lg:p-10">
+              <p className={eyebrowClass}>Sign in</p>
+              <h2 className={`${headlineClass} mt-4 text-[2.4rem] leading-none`}>
+                Enter your account.
+              </h2>
+
+              {error ? (
+                <div className="mt-6 rounded-[20px] border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">
+                  {error}
+                </div>
+              ) : null}
+
+              <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                <div>
+                  <label htmlFor="email" className={fieldLabelClass}>
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="you@algora.dev"
+                    required
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="password" className={fieldLabelClass}>
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={isPasswordVisible ? 'text' : 'password'}
+                      name="password"
+                      autoComplete="current-password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Enter your password"
+                      required
+                      className={`${inputClass} pr-16`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsPasswordVisible((prev) => !prev)}
+                      className={passwordToggleClass}
+                      aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
+                    >
+                      {isPasswordVisible ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`${primaryButtonClass} mt-2 w-full`}
+                >
+                  {isSubmitting ? 'Signing in...' : 'Sign in'}
+                </button>
+              </form>
+            </Panel>
+          </section>
         </div>
-      </section>
-    </main>
+      </main>
+    </AmbientPage>
   )
 }
 
