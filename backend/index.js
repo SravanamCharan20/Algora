@@ -3,7 +3,9 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
+import contestRoutes from "./routes/contestRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import { ensureAdminUser } from "./utils/bootstrapAdmin.js";
 
 dotenv.config();
 
@@ -39,11 +41,13 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", userRoutes);
+app.use("/api/contests", contestRoutes);
 
 const startServer = async () => {
   try {
     await connectDB();
     console.log("Database connected !!");
+    await ensureAdminUser();
 
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
