@@ -27,6 +27,10 @@ export const secondaryButtonClass =
 export const inputClass =
   'w-full rounded-[20px] border border-black/10 bg-[#f8f6f1] px-5 py-4 text-base text-[#0f1115] outline-none transition duration-200 placeholder:text-black/32 focus:border-black/15 focus:bg-white focus:shadow-[0_0_0_4px_rgba(15,17,21,0.05)]'
 
+export const textareaClass = `${inputClass} min-h-[132px] resize-none`
+
+export const selectClass = `${inputClass} appearance-none`
+
 export const fieldLabelClass =
   'mb-2.5 block text-sm font-semibold text-black/64'
 

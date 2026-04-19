@@ -1,13 +1,14 @@
 import express from "express";
-import jwt from "jsonwebtoken";
 import { z } from "zod";
 import User from "../models/User.js";
+import {
+  clearCookieOptions,
+  cookieOptions,
+  createToken,
+  requireAuth,
+} from "../middleware/auth.js";
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_SECRECT;
-const COOKIE_NAME = "algora_token";
-const TOKEN_EXPIRY = 7 * 24 * 60 * 60;
-const isProduction = process.env.NODE_ENV === "production";
 
 const signupSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters."),
@@ -21,32 +22,8 @@ const signupSchema = z.object({
 const signinSchema = z.object({
   email: z.email("Enter a valid email address.").trim().toLowerCase(),
   password: z.string().min(1, "Password is required."),
+  role: z.enum(["user", "admin"]).default("user"),
 });
-
-const cookieOptions = {
-  httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? "none" : "lax",
-  maxAge: TOKEN_EXPIRY * 1000,
-  path: "/",
-};
-
-const clearCookieOptions = {
-  httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? "none" : "lax",
-  path: "/",
-};
-
-const createToken = (userId) => {
-  if (!JWT_SECRET) {
-    throw new Error("JWT secret is not configured.");
-  }
-
-  return jwt.sign({ userId }, JWT_SECRET, {
-    expiresIn: TOKEN_EXPIRY,
-  });
-};
 
 const sendAuthResponse = (res, user, statusCode = 200) => {
   const token = createToken(user._id.toString());
@@ -55,30 +32,6 @@ const sendAuthResponse = (res, user, statusCode = 200) => {
     message: statusCode === 201 ? "Account created successfully." : "Signed in successfully.",
     user,
   });
-};
-
-const getTokenFromRequest = (req) => req.cookies?.[COOKIE_NAME];
-
-const requireAuth = async (req, res, next) => {
-  try {
-    const token = getTokenFromRequest(req);
-
-    if (!token) {
-      return res.status(401).json({ message: "Authentication required." });
-    }
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findById(decoded.userId);
-
-    if (!user) {
-      return res.status(401).json({ message: "Session is no longer valid." });
-    }
-
-    req.user = user;
-    next();
-  } catch (_error) {
-    return res.status(401).json({ message: "Please sign in again." });
-  }
 };
 
 router.post("/signup", async (req, res) => {
@@ -98,7 +51,7 @@ router.post("/signup", async (req, res) => {
       return res.status(409).json({ message: "An account with this email already exists." });
     }
 
-    const user = await User.create({ name, email, password });
+    const user = await User.create({ name, email, password, role: "user" });
     return sendAuthResponse(res, user, 201);
   } catch (error) {
     return res.status(500).json({
@@ -117,7 +70,7 @@ router.post("/signin", async (req, res) => {
       });
     }
 
-    const { email, password } = parsedBody.data;
+    const { email, password, role } = parsedBody.data;
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
@@ -128,6 +81,15 @@ router.post("/signin", async (req, res) => {
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password." });
+    }
+
+    if (user.role !== role) {
+      return res.status(403).json({
+        message:
+          role === "admin"
+            ? "This account does not have admin access."
+            : "Use the admin sign-in for this account.",
+      });
     }
 
     user.password = undefined;

@@ -16,15 +16,35 @@ import {
   inputClass,
   passwordToggleClass,
   primaryButtonClass,
+  secondaryButtonClass,
   shellClass,
   textLinkClass,
 } from '../../components/site-ui'
 
-const entryStats = [
-  { label: 'Privacy', value: 'Invite only' },
-  { label: 'Ranking', value: 'Live board' },
-  { label: 'Entry', value: 'Fast access' },
-]
+const modeContent = {
+  user: {
+    eyebrow: 'User sign in',
+    headline: 'Back to the room.',
+    copy: 'Use your account to continue into private matches.',
+    stats: [
+      { label: 'Privacy', value: 'Invite only' },
+      { label: 'Ranking', value: 'Live board' },
+      { label: 'Entry', value: 'Fast access' },
+    ],
+    panelTitle: 'Enter your account.',
+  },
+  admin: {
+    eyebrow: 'Admin sign in',
+    headline: 'Open contest control.',
+    copy: 'Manage contest setup, problems, and live start-stop actions.',
+    stats: [
+      { label: 'Control', value: 'Create contests' },
+      { label: 'Problems', value: 'Edit lineup' },
+      { label: 'Live', value: 'Start / stop' },
+    ],
+    panelTitle: 'Enter admin access.',
+  },
+}
 
 const Signin = () => {
   const router = useRouter()
@@ -37,6 +57,8 @@ const Signin = () => {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const [selectedRole, setSelectedRole] = useState('user')
+  const activeContent = modeContent[selectedRole]
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -56,7 +78,7 @@ const Signin = () => {
     setIsSubmitting(true)
 
     try {
-      await signIn(formData)
+      await signIn({ ...formData, role: selectedRole })
       router.push('/')
     } catch (submissionError) {
       setError(submissionError.message || 'Something went wrong. Please try again.')
@@ -88,16 +110,16 @@ const Signin = () => {
             <BrandMark />
 
             <div className="max-w-4xl py-14 lg:py-20">
-              <p className={eyebrowClass}>Sign in</p>
+              <p className={eyebrowClass}>{activeContent.eyebrow}</p>
               <h1 className={`${headlineClass} mt-6 max-w-4xl text-5xl leading-[0.9] sm:text-6xl lg:text-[5.6rem]`}>
-                Back to the room.
+                {activeContent.headline}
               </h1>
               <p className={`${bodyTextClass} mt-6 max-w-xl`}>
-                Use your account to continue into private matches.
+                {activeContent.copy}
               </p>
 
               <div className="mt-12 grid gap-4 sm:grid-cols-3">
-                {entryStats.map((item) => (
+                {activeContent.stats.map((item) => (
                   <MiniStat key={item.label} label={item.label} value={item.value} />
                 ))}
               </div>
@@ -113,9 +135,33 @@ const Signin = () => {
 
           <section className="flex items-center justify-center lg:justify-end">
             <Panel className="w-full max-w-[480px] p-7 sm:p-8 lg:p-10">
-              <p className={eyebrowClass}>Sign in</p>
+              <div className="flex gap-3 rounded-[20px] border border-black/[0.08] bg-[#f7f4ee] p-2">
+                {Object.entries(modeContent).map(([role, content]) => {
+                  const isActive = role === selectedRole
+
+                  return (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => {
+                        setError('')
+                        setSelectedRole(role)
+                      }}
+                      className={
+                        isActive
+                          ? `${primaryButtonClass} min-w-0 flex-1 px-4 py-3`
+                          : `${secondaryButtonClass} min-w-0 flex-1 border-transparent px-4 py-3 shadow-none`
+                      }
+                    >
+                      {content.eyebrow.replace(' sign in', '')}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <p className={`${eyebrowClass} mt-6`}>{activeContent.eyebrow}</p>
               <h2 className={`${headlineClass} mt-4 text-[2.4rem] leading-none`}>
-                Enter your account.
+                {activeContent.panelTitle}
               </h2>
 
               {error ? (

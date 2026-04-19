@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'
 
 const UserContext = createContext(null)
 
@@ -19,6 +19,24 @@ const parseResponse = async (response) => {
   }
 
   return data
+}
+
+const request = async (path, options = {}) => {
+  const { body, headers, ...rest } = options
+  const config = {
+    credentials: 'include',
+    ...rest,
+  }
+
+  if (body !== undefined) {
+    config.body = JSON.stringify(body)
+    config.headers = buildHeaders(headers)
+  } else if (headers) {
+    config.headers = headers
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, config)
+  return parseResponse(response)
 }
 
 const fetchCurrentUser = async () => {
@@ -67,27 +85,21 @@ export const UserProvider = ({ children }) => {
   }, [])
 
   const signUp = async (payload) => {
-    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+    const data = await request('/auth/signup', {
       method: 'POST',
-      headers: buildHeaders(),
-      credentials: 'include',
-      body: JSON.stringify(payload),
+      body: payload,
     })
 
-    const data = await parseResponse(response)
     setUser(data.user)
     return data
   }
 
   const signIn = async (payload) => {
-    const response = await fetch(`${API_BASE_URL}/auth/signin`, {
+    const data = await request('/auth/signin', {
       method: 'POST',
-      headers: buildHeaders(),
-      credentials: 'include',
-      body: JSON.stringify(payload),
+      body: payload,
     })
 
-    const data = await parseResponse(response)
     setUser(data.user)
     return data
   }
@@ -103,16 +115,61 @@ export const UserProvider = ({ children }) => {
     }
   }
 
+  const listContests = async () => {
+    const data = await request('/contests')
+    return data.contests || []
+  }
+
+  const createContest = async (payload) => {
+    const data = await request('/contests', {
+      method: 'POST',
+      body: payload,
+    })
+
+    return data.contest
+  }
+
+  const updateContest = async (contestId, payload) => {
+    const data = await request(`/contests/${contestId}`, {
+      method: 'PATCH',
+      body: payload,
+    })
+
+    return data.contest
+  }
+
+  const startContest = async (contestId) => {
+    const data = await request(`/contests/${contestId}/start`, {
+      method: 'POST',
+    })
+
+    return data.contest
+  }
+
+  const stopContest = async (contestId) => {
+    const data = await request(`/contests/${contestId}/stop`, {
+      method: 'POST',
+    })
+
+    return data.contest
+  }
+
   return (
     <UserContext.Provider
       value={{
         user,
         isLoading,
         isAuthenticated: Boolean(user),
+        isAdmin: user?.role === 'admin',
         refreshUser,
         signIn,
         signUp,
         signOut,
+        listContests,
+        createContest,
+        updateContest,
+        startContest,
+        stopContest,
       }}
     >
       {children}

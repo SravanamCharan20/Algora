@@ -219,6 +219,10 @@ const Signup = () => {
                   {isSubmitting ? 'Creating account...' : 'Create account'}
                 </button>
               </form>
+
+              <p className="mt-5 text-sm text-black/46">
+                Admin access is provisioned separately.
+              </p>
             </Panel>
           </section>
         </div>
